@@ -28,7 +28,7 @@ Derive the abstract stack cheat sheet from the live AWS deployment. Write or ref
    Print the exact command before running it.
    On the first run, the script proposes logical roles for each discovered resource group. Present the proposed roles to the user and ask for confirmation or relabeling. Once the user approves, re-run with any label flags the script accepts to persist the mapping.
 
-   Discovery scans the env's primary region, any extra regions listed under the env's `regions` array in `aws-profiles.local.json`, and `us-east-1`. Scanning `us-east-1` captures global-service stacks (CloudFront/ACM frontends) that deploy there regardless of the primary region. Add a `regions` array to the env entry when a stack pins a different region.
+   Discovery scans every region the account has enabled (via `account list-regions`, falling back to `ec2 describe-regions`), so a wrong primary-region guess never hides stacks. The env's primary region, any extra regions listed under the env's `regions` array in `aws-profiles.local.json`, and `us-east-1` are always included as a floor in case region enumeration is not permitted. NOTE: `resolve` still queries only the env's primary region, so when a stack lives elsewhere (e.g. a CloudFront/ACM frontend in `us-east-1`), set the primary region to where most resources live.
 
 4. **Persist the stack cheat sheet.**
    Write or update `.claude/aws-stack.md` using only the abstract role names and resource types confirmed in step 3. Do not write ARNs, account IDs, or any concrete identifier into this file.

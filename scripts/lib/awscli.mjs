@@ -132,3 +132,41 @@ export function checkSso(profile) {
     return { valid: false };
   }
 }
+
+/**
+ * List the account's enabled regions so discovery never depends on a guessed
+ * primary region. Prefers the Account API (authoritative, carries opt-in
+ * status); falls back to EC2 DescribeRegions; returns [] when neither is
+ * permitted so the caller can fall back to its own static region set.
+ * Never throws: a missing permission must not abort discovery.
+ * @param {string} profile
+ * @param {string} [fallbackRegion]  region endpoint for the EC2 fallback call
+ * @returns {string[]} enabled region names, or [] when enumeration fails
+ */
+export function listEnabledRegions(profile, fallbackRegion) {
+  // Account API: returns only ENABLED + ENABLED_BY_DEFAULT regions.
+  try {
+    const res = aws(
+      ["account", "list-regions", "--region-opt-status-contains", "ENABLED", "ENABLED_BY_DEFAULT"],
+      { profile },
+    );
+    const regions = (res?.Regions || []).map((r) => r.RegionName).filter(Boolean);
+    if (regions.length) return regions;
+  } catch {
+    // Account API not permitted or unavailable: try EC2 next.
+  }
+
+  // EC2 fallback: DescribeRegions, dropping regions the account has not opted into.
+  try {
+    const res = aws(["ec2", "describe-regions"], { profile, region: fallbackRegion });
+    const regions = (res?.Regions || [])
+      .filter((r) => r.OptInStatus !== "not-opted-in")
+      .map((r) => r.RegionName)
+      .filter(Boolean);
+    if (regions.length) return regions;
+  } catch {
+    // Neither API available: caller keeps its static region set.
+  }
+
+  return [];
+}

@@ -10,7 +10,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, basename, extname } from "node:path";
 
 import { paths, fileExists, out, ensureDir } from "./utils.mjs";
-import { aws, AwsError } from "./awscli.mjs";
+import { aws, AwsError, listEnabledRegions } from "./awscli.mjs";
 import { resolveEnv, listEnvs } from "./profiles.mjs";
 import { renderStackDoc, parseStackDoc } from "./stackdoc.mjs";
 import { writeFileSync } from "node:fs";
@@ -483,9 +483,14 @@ export function discover({ env, check = false }) {
   const { root, stackDoc, claudeDir } = paths();
   const ctx = resolveEnv(env);
 
-  // Scan the primary region, any env-configured extra regions, and us-east-1
-  // (where CloudFront/ACM global stacks live), deduped.
-  const scanRegions = [...new Set([ctx.region, ...ctx.regions, "us-east-1"])];
+  // Scan every enabled region so discovery never depends on a correctly-guessed
+  // primary region (a wrong guess silently hides stacks in other regions). The
+  // env's primary, configured extras, and us-east-1 are unioned in as a floor so
+  // a missing account:ListRegions / ec2:DescribeRegions permission degrades to
+  // the prior behavior instead of scanning nothing.
+  const enabled = listEnabledRegions(ctx.profile, ctx.region);
+  const scanRegions = [...new Set([ctx.region, ...ctx.regions, "us-east-1", ...enabled])];
+  out(`+ scanning ${scanRegions.length} region(s): ${scanRegions.join(", ")}`);
 
   // Load the committed doc first so hand-edited stack descriptions are
   // preserved. This runs for both the write and --check paths, so the drift

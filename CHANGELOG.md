@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-16
+
+### Changed
+
+- Discovery now scans every enabled region (via `account list-regions`, falling back to `ec2 describe-regions`) instead of only the primary region plus `us-east-1`. A wrong primary-region guess no longer silently hides stacks in other regions. The previous region set (primary, configured extras, `us-east-1`) is retained as a floor when region enumeration is not permitted.
+
 ## [1.0.0] - 2026-06-16
 
 ### Added
@@ -21,5 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agents: `diagnostician`, `cost-analyst`, `security-auditor`, `cdk-engineer`.
 - `node:test` suite covering guard classification, decision policy, stack-doc round-trip, and flag parsing.
 
-[Unreleased]: https://github.com/rcrsr/aws/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/rcrsr/aws/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/rcrsr/aws/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/rcrsr/aws/releases/tag/v1.0.0

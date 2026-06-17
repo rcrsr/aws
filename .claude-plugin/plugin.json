@@ -1,6 +1,6 @@
 {
   "name": "aws",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Operate your AWS infrastructure from Claude Code: stack discovery, live resource resolution, and SSO-aware guardrails that block destructive commands.",
   "author": {
     "name": "Andre Bremer",
